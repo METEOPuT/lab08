@@ -1,14 +1,14 @@
-## Laboratory work III
+## Laboratory work VIII
 
-Данная лабораторная работа посвещена изучению систем автоматизации сборки проекта на примере **CMake**
+Данная лабораторная работа посвещена изучению систем автоматизации развёртывания и управления приложениями на примере **Docker**
 
 ```sh
-$ open https://cmake.org/
+$ open https://docs.docker.com/get-started/
 ```
 
 ## Tasks
 
-- [ ] 1. Создать публичный репозиторий с названием **lab03** на сервисе **GitHub**
+- [ ] 1. Создать публичный репозиторий с названием **lab08** на сервисе **GitHub**
 - [ ] 2. Ознакомиться со ссылками учебного материала
 - [ ] 3. Выполнить инструкцию учебного материала
 - [ ] 4. Составить отчет и отправить ссылку личным сообщением в **Slack**
@@ -19,134 +19,136 @@ $ open https://cmake.org/
 $ export GITHUB_USERNAME=<имя_пользователя>
 ```
 
-```sh
+```
 $ cd ${GITHUB_USERNAME}/workspace
 $ pushd .
 $ source scripts/activate
 ```
 
 ```sh
-$ git clone https://github.com/${GITHUB_USERNAME}/lab02.git projects/lab03
-$ cd projects/lab03
+$ git clone https://github.com/${GITHUB_USERNAME}/lab07 lab08
+$ cd lab08
+$ git submodule update --init
 $ git remote remove origin
-$ git remote add origin https://github.com/${GITHUB_USERNAME}/lab03.git
+$ git remote add origin https://github.com/${GITHUB_USERNAME}/lab08
 ```
 
 ```sh
-$ g++ -std=c++11 -I./include -c sources/print.cpp
-$ ls print.o
-$ nm print.o | grep print
-$ ar rvs print.a print.o
-$ file print.a
-$ g++ -std=c++11 -I./include -c examples/example1.cpp
-$ ls example1.o
-$ g++ example1.o print.a -o example1
-$ ./example1 && echo
-```
-
-```sh
-$ g++ -std=c++11 -I./include -c examples/example2.cpp
-$ nm example2.o
-$ g++ example2.o print.a -o example2
-$ ./example2
-$ cat log.txt && echo
-```
-
-```sh
-$ rm -rf example1.o example2.o print.o
-$ rm -rf print.a
-$ rm -rf example1 example2
-$ rm -rf log.txt
-```
-
-```sh
-$ cat > CMakeLists.txt <<EOF
-cmake_minimum_required(VERSION 3.4)
-project(print)
+$ cat > Dockerfile <<EOF
+FROM ubuntu:18.04
 EOF
 ```
 
 ```sh
-$ cat >> CMakeLists.txt <<EOF
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+$ cat >> Dockerfile <<EOF
+
+RUN apt update
+RUN apt install -yy gcc g++ cmake
 EOF
 ```
 
 ```sh
-$ cat >> CMakeLists.txt <<EOF
-add_library(print STATIC \${CMAKE_CURRENT_SOURCE_DIR}/sources/print.cpp)
+$ cat >> Dockerfile <<EOF
+
+COPY . print/
+WORKDIR print
 EOF
 ```
 
 ```sh
-$ cat >> CMakeLists.txt <<EOF
-include_directories(\${CMAKE_CURRENT_SOURCE_DIR}/include)
+$ cat >> Dockerfile <<EOF
+
+RUN cmake -H. -B_build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=_install
+RUN cmake --build _build
+RUN cmake --build _build --target install
 EOF
 ```
 
 ```sh
-$ cmake -H. -B_build
-$ cmake --build _build
-```
+$ cat >> Dockerfile <<EOF
 
-```sh
-$ cat >> CMakeLists.txt <<EOF
-
-add_executable(example1 \${CMAKE_CURRENT_SOURCE_DIR}/examples/example1.cpp)
-add_executable(example2 \${CMAKE_CURRENT_SOURCE_DIR}/examples/example2.cpp)
+ENV LOG_PATH /home/logs/log.txt
 EOF
 ```
 
 ```sh
-$ cat >> CMakeLists.txt <<EOF
+$ cat >> Dockerfile <<EOF
 
-target_link_libraries(example1 print)
-target_link_libraries(example2 print)
+VOLUME /home/logs
 EOF
 ```
 
 ```sh
-$ cmake --build _build
-$ cmake --build _build --target print
-$ cmake --build _build --target example1
-$ cmake --build _build --target example2
+$ cat >> Dockerfile <<EOF
+
+WORKDIR _install/bin
+EOF
 ```
 
 ```sh
-$ ls -la _build/libprint.a
-$ _build/example1 && echo
-hello
-$ _build/example2
-$ cat log.txt && echo
-hello
-$ rm -rf log.txt
+$ cat >> Dockerfile <<EOF
+
+ENTRYPOINT ./demo
+EOF
 ```
 
 ```sh
-$ git clone https://github.com/tp-labs/lab03 tmp
-$ mv -f tmp/CMakeLists.txt .
-$ rm -rf tmp
+$ docker build -t logger .
 ```
 
 ```sh
-$ cat CMakeLists.txt
-$ cmake -H. -B_build -DCMAKE_INSTALL_PREFIX=_install
-$ cmake --build _build --target install
-$ tree _install
+$ docker images
 ```
 
 ```sh
-$ git add CMakeLists.txt
-$ git commit -m"added CMakeLists.txt"
+$ mkdir logs
+$ docker run -it -v "$(pwd)/logs/:/home/logs/" logger
+text1
+text2
+text3
+<C-D>
+```
+
+```sh
+$ docker inspect logger
+```
+
+```sh
+$ cat logs/log.txt
+```
+
+```sh
+$ gsed -i 's/lab07/lab08/g' README.md
+```
+
+```sh
+$ vim .travis.yml
+/lang<CR>o
+services:
+- docker<ESC>
+jVGdo
+script:
+- docker build -t logger .<ESC>
+:wq
+```
+
+```sh
+$ git add Dockerfile
+$ git add .travis.yml
+$ git commit -m"adding Dockerfile"
 $ git push origin master
+```
+
+```sh
+$ travis login --auto
+$ travis enable
 ```
 
 ## Report
 
 ```sh
 $ popd
-$ export LAB_NUMBER=03
+$ export LAB_NUMBER=08
 $ git clone https://github.com/tp-labs/lab${LAB_NUMBER} tasks/lab${LAB_NUMBER}
 $ mkdir reports/lab${LAB_NUMBER}
 $ cp tasks/lab${LAB_NUMBER}/README.md reports/lab${LAB_NUMBER}/REPORT.md
@@ -157,36 +159,74 @@ $ gist REPORT.md
 
 ## Homework
 
-Представьте, что вы стажер в компании "Formatter Inc.".
-### Задание 1
-Вам поручили перейти на систему автоматизированной сборки **CMake**.
-Исходные файлы находятся в директории [formatter_lib](formatter_lib).
-В этой директории находятся файлы для статической библиотеки *formatter*.
-Создайте `CMakeList.txt` в директории [formatter_lib](formatter_lib),
-с помощью которого можно будет собирать статическую библиотеку *formatter*.
+Выполнив установку Докера, создаём файл Dockerfile:
+```
+FROM ubuntu:18.04
+RUN apt update
+RUN apt  install -yy gcc g++ cmake
+COPY . /solver_application
+WORKDIR /solver_application
+RUN cmake -H. -B_build -DDCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=_install
+RUN cmake --build _build
+RUN cmake --build _build --target install
+ENV LOG_PATH=/home/logs/log.txt
+VOLUME /home/logs
+WORKDIR /solver_application/_build/
+ENTRYPOINT ["./equation"]
+```
+Создаём файл .github/workflows/main.yml:
+```
+name: Actions
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
 
-### Задание 2
-У компании "Formatter Inc." есть перспективная библиотека,
-которая является расширением предыдущей библиотеки. Т.к. вы уже овладели
-навыком созданием `CMakeList.txt` для статической библиотеки *formatter*, ваш 
-руководитель поручает заняться созданием `CMakeList.txt` для библиотеки 
-*formatter_ex*, которая в свою очередь использует библиотеку *formatter*.
+jobs: 
+ build_Linux:
 
-### Задание 3
-Конечно же ваша компания предоставляет примеры использования своих библиотек.
-Чтобы продемонстрировать как работать с библиотекой *formatter_ex*,
-вам необходимо создать два `CMakeList.txt` для двух простых приложений:
-* *hello_world*, которое использует библиотеку *formatter_ex*;
-* *solver*, приложение которое испольует статические библиотеки *formatter_ex* и *solver_lib*.
+  runs-on: ubuntu-latest
 
-**Удачной стажировки!**
+  steps:
+  - uses: actions/checkout@v4
+
+  - name: Build the Docker
+    run: docker build -t logger .
+
+  - name: Put logs
+    run: docker run -v "$(pwd)/logs/:/home/logs/" logger
+```
+Запускаем Докер локально:
+```
+$ sudo docker build -t logger .  
+[+] Building 13.0s (14/14) FINISHED                                                                                                   docker:default
+ => [internal] load build definition from Dockerfile                                                                                            0.0s
+ => => transferring dockerfile: 424B                                                                                                            0.0s 
+ => [internal] load metadata for docker.io/library/ubuntu:18.04                                                                                 3.7s 
+ => [internal] load .dockerignore                                                                                                               0.0s
+ => => transferring context: 2B                                                                                                                 0.0s 
+ => [1/9] FROM docker.io/library/ubuntu:18.04@sha256:152dc042452c496007f07ca9127571cb9c29697f42acbfad72324b2bb2e43c98                           0.0s 
+ => [internal] load build context                                                                                                               0.0s 
+ => => transferring context: 6.11kB                                                                                                             0.0s 
+ => CACHED [2/9] RUN apt update                                                                                                                 0.0s 
+ => CACHED [3/9] RUN apt  install -yy gcc g++ cmake                                                                                             0.0s 
+ => [4/9] COPY . /solver_application                                                                                                            0.1s 
+ => [5/9] WORKDIR /solver_application                                                                                                           0.0s 
+ => [6/9] RUN cmake -H. -B_build -DDCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=_install                                                    2.0s 
+ => [7/9] RUN cmake --build _build                                                                                                              1.7s
+ => [8/9] RUN cmake --build _build --target install                                                                                             0.6s 
+ => [9/9] WORKDIR /solver_application/_build/                                                                                                   0.0s 
+ => exporting to image                                                                                                                          4.7s 
+ => => exporting layers                                                                                                                         4.7s 
+ => => writing image sha256:6132c1e22bc18d25c0d3065cba25b030c5195d0d7293aa0b43317fa42c50a675                                                    0.0s 
+ => => naming to docker.io/library/logger 
+```
 
 ## Links
-- [Основы сборки проектов на С/C++ при помощи CMake](https://eax.me/cmake/)
-- [CMake Tutorial](http://neerc.ifmo.ru/wiki/index.php?title=CMake_Tutorial)
-- [C++ Tutorial - make & CMake](https://www.bogotobogo.com/cplusplus/make.php)
-- [Autotools](http://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html)
-- [CMake](https://cgold.readthedocs.io/en/latest/index.html)
+
+- [Book](https://www.dockerbook.com)
+- [Instructions](https://docs.docker.com/engine/reference/builder/)
 
 ```
 Copyright (c) 2015-2021 The ISC Authors
