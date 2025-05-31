@@ -18,3 +18,12 @@ jobs:
 
   - name: Put logs
     run: docker run -v "$(pwd)/logs/:/home/logs/" logger
+
+  - name: Show logs
+    run: cat logs/log.txt
+
+  - name: Upload logs
+    uses: actions/upload-artifact@v4
+    with:
+      name: build-log
+      path: logs/log.txt
