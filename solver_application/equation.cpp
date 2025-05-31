@@ -20,6 +20,11 @@ int main()
 
         formatter(std::cout, "x1 = " + std::to_string(x1));
         formatter(std::cout, "x2 = " + std::to_string(x2));
+
+	std::ofstream log("/home/logs/log.txt");
+
+	formatter(log, "x1 = " + std::to_string(x1));
+	formatter(log, "x2 = " + std::to_string(x2));
     }
     catch (const std::logic_error& ex)
     {
