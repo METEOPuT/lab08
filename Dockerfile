@@ -1,6 +1,6 @@
-FROM ubuntu:18.04
-RUN apt update
-RUN apt  install -yy gcc g++ cmake
+FROM ubuntu:20.04
+RUN apt-get update
+RUN apt-get  install -y gcc g++ cmake
 COPY . /solver_application
 WORKDIR /solver_application
 RUN cmake -H. -B_build -DDCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=_install
