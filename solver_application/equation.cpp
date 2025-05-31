@@ -5,11 +5,11 @@
 
 int main()
 {
-    float a = 0;
-    float b = 0;
-    float c = 0;
+    float a = 1;
+    float b = 2;
+    float c = 1;
 
-    std::cin >> a >> b >> c;
+    //std::cin >> a >> b >> c;
 
     float x1 = 0;
     float x2 = 0;
